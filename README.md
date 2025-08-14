@@ -17,6 +17,39 @@ Currently, DeerFlow has officially entered the [FaaS Application Center of Volce
 
 Please visit [our official website](https://deerflow.tech/) for more details.
 
+---
+## Logging System – Design & Implementation
+
+> Successfully designed and shipped a **comprehensive logging system** for DeerFlow.  
+> The following sections cover **Architecture**, **Key Features**, and **Integration Points**.
+
+### 🏗️ Architecture
+
+- **Complete Logging Infrastructure**  
+  - Located at `src/logging/` – **5 core components**  
+  - **Date-based rotation**: daily log files with configurable retention  
+  - **Structured JSON logs**: easy to parse and analyze  
+  - **Cross-module integration**: spans workflows, agents, and tools
+
+### 📊 Key Features
+
+| Feature | Description |
+| --- | --- |
+| **Full Interaction Logging** | Captures user queries, agent responses, LLM usage, workflow events, tool invocations, and performance metrics |
+| **Smart Directory Layout** | <ul><li>`logs/interactions/` – user–agent interactions</li><li>`logs/agents/` – agent activity & LLM calls</li><li>`logs/workflows/` – workflow execution</li><li>`logs/tools/` – tool usage & errors</li><li>`logs/performance/` – performance metrics</li><li>`logs/security/` – security events</li></ul> |
+| **Production-Ready** | <ul><li>Thread-safe concurrent writes</li><li>Automatic file rotation & cleanup</li><li>Error resilience with graceful degradation</li><li>Configurable retention (default: 30 days)</li></ul> |
+
+### 🔧 Integration Points
+
+| File | Logging Added |
+| --- | --- |
+| `workflow.py` | workflow events |
+| `graph/nodes.py` | node execution & tool usage |
+| `server/app.py` | API requests |
+| Config files | log level toggles |
+
+---
+
 ## Demo
 
 ### Video
