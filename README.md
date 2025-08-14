@@ -112,7 +112,8 @@ Make sure your system meets the following minimum requirements:
 
 ```bash
 # Clone the repository
-git clone https://github.com/bytedance/deer-flow.git
+git clone https://github.com/YBCarry/deer-flow_debug.git
+mv deer-flow_debug deer-flow
 cd deer-flow
 
 # Install dependencies, uv will take care of the python interpreter and venv creation, and install the required packages
