@@ -3,7 +3,7 @@
 
 import json
 import logging
-import os
+import time
 from typing import Annotated, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -27,6 +27,7 @@ from src.llms.llm import get_llm_by_type
 from src.prompts.planner_model import Plan
 from src.prompts.template import apply_prompt_template
 from src.utils.json_utils import repair_json_output
+from src.logging import log_agent_activity, log_workflow_event, log_tool_usage
 
 from .types import State
 from ..config import SELECTED_SEARCH_ENGINE, SearchEngine
@@ -46,36 +47,107 @@ def handoff_to_planner(
 
 
 def background_investigation_node(state: State, config: RunnableConfig):
+    """Perform background investigation using web search."""
+    start_time = time.time()
     logger.info("background investigation node is running.")
+    
+    # Log node start
+    log_workflow_event(
+        workflow_type="research_workflow",
+        node_name="background_investigation",
+        status="started",
+        input_data={"research_topic": state.get("research_topic")}
+    )
+    
     configurable = Configuration.from_runnable_config(config)
     query = state.get("research_topic")
     background_investigation_results = None
-    if SELECTED_SEARCH_ENGINE == SearchEngine.TAVILY.value:
-        searched_content = LoggedTavilySearch(
-            max_results=configurable.max_search_results
-        ).invoke(query)
-        if isinstance(searched_content, list):
-            background_investigation_results = [
-                f"## {elem['title']}\n\n{elem['content']}" for elem in searched_content
-            ]
-            return {
-                "background_investigation_results": "\n\n".join(
-                    background_investigation_results
+    
+    try:
+        if SELECTED_SEARCH_ENGINE == SearchEngine.TAVILY.value:
+            # Log tool usage
+            tool_start_time = time.time()
+            searched_content = LoggedTavilySearch(
+                max_results=configurable.max_search_results
+            ).invoke(query)
+            tool_duration = (time.time() - tool_start_time) * 1000
+            
+            log_tool_usage(
+                tool_name="tavily_search",
+                agent_name="background_investigation",
+                input_parameters={"query": query, "max_results": configurable.max_search_results},
+                duration_ms=tool_duration,
+                success=True
+            )
+            
+            if isinstance(searched_content, list):
+                background_investigation_results = [
+                    f"## {elem['title']}\n\n{elem['content']}" for elem in searched_content
+                ]
+                result = {
+                    "background_investigation_results": "\n\n".join(
+                        background_investigation_results
+                    )
+                }
+            else:
+                logger.error(
+                    f"Tavily search returned malformed response: {searched_content}"
+                )
+                result = {"background_investigation_results": ""}
+        else:
+            tool_start_time = time.time()
+            background_investigation_results = get_web_search_tool(
+                configurable.max_search_results
+            ).invoke(query)
+            tool_duration = (time.time() - tool_start_time) * 1000
+            
+            log_tool_usage(
+                tool_name=f"web_search_{SELECTED_SEARCH_ENGINE}",
+                agent_name="background_investigation",
+                input_parameters={"query": query, "max_results": configurable.max_search_results},
+                duration_ms=tool_duration,
+                success=True
+            )
+            
+            result = {
+                "background_investigation_results": json.dumps(
+                    background_investigation_results, ensure_ascii=False
                 )
             }
-        else:
-            logger.error(
-                f"Tavily search returned malformed response: {searched_content}"
-            )
-    else:
-        background_investigation_results = get_web_search_tool(
-            configurable.max_search_results
-        ).invoke(query)
-    return {
-        "background_investigation_results": json.dumps(
-            background_investigation_results, ensure_ascii=False
+        
+        # Log successful completion
+        duration_ms = (time.time() - start_time) * 1000
+        log_workflow_event(
+            workflow_type="research_workflow",
+            node_name="background_investigation",
+            status="completed",
+            duration_ms=duration_ms,
+            output_data={"results_count": len(background_investigation_results) if background_investigation_results else 0}
         )
-    }
+        
+        return result
+        
+    except Exception as e:
+        # Log error
+        duration_ms = (time.time() - start_time) * 1000
+        log_workflow_event(
+            workflow_type="research_workflow", 
+            node_name="background_investigation",
+            status="error",
+            duration_ms=duration_ms,
+            error=str(e)
+        )
+        
+        log_tool_usage(
+            tool_name=SELECTED_SEARCH_ENGINE,
+            agent_name="background_investigation",
+            input_parameters={"query": query},
+            success=False,
+            error=str(e)
+        )
+        
+        logger.error(f"Background investigation failed: {e}")
+        return {"background_investigation_results": ""}
 
 
 def planner_node(
