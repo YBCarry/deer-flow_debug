@@ -107,7 +107,8 @@ DeerFlow 使用 Python 开发，并配有用 Node.js 编写的 Web UI。为确�
 
 ```bash
 # 克隆仓库
-git clone https://github.com/bytedance/deer-flow.git
+git clone https://github.com/YBCarry/deer-flow_debug.git
+mv deer-flow_debug deer-flow
 cd deer-flow
 
 # 安装依赖，uv将负责Python解释器和虚拟环境的创建，并安装所需的包
