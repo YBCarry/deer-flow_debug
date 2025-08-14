@@ -80,7 +80,8 @@ Certifique-se de que seu sistema atenda os seguintes requisitos mínimos:
 
 ```bash
 # Clone o repositório
-git clone https://github.com/bytedance/deer-flow.git
+git clone https://github.com/YBCarry/deer-flow_debug.git
+mv deer-flow_debug deer-flow
 cd deer-flow
 
 # Instale as dependências, uv irá lidar com o interpretador do python e a criação do venv, e instalar os pacotes necessários
