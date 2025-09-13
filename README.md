@@ -17,6 +17,15 @@ Currently, DeerFlow has officially entered the [FaaS Application Center of Volce
 
 Please visit [our official website](https://deerflow.tech/) for more details.
 
+🚀 DeerFlow Enhanced - An enterprise-ready fork of the original DeerFlow project, specifically optimized for Docker deployment and production environments. This enhanced version introduces a comprehensive System Prompt Management feature with a intuitive Web UI that allows users to upload, update, and manage AI agent prompt templates for all 5 core agents (coordinator, planner, researcher, coder, reporter) with automatic backup and version control. Additionally, it ships with a production-grade logging infrastructure featuring structured JSON logs, automatic daily rotation, thread-safe concurrent writes, and cross-module integration spanning workflows, agents, and tools. The project includes Docker optimization with complete containerization via docker-compose, external access support through ngrok integration with CORS resolution, and environment-adaptive path configuration. Unlike the original DeerFlow which focuses on core research capabilities, this enhanced version prioritizes system management, operational monitoring, and deployment experience - making it ideal for enterprise deployments, team collaboration scenarios, and containerized environments where users need convenient prompt debugging, comprehensive logging, and seamless external access configuration.
+
+  ---
+  This single paragraph effectively communicates:
+  - Project positioning (enhanced fork vs. original)
+  - Key differentiators (system management, logging, Docker optimization)
+  - Target audience (enterprise, teams, production environments)
+  - Technical value proposition (operational features beyond core functionality)
+
 ---
 ## Logging System – Design & Implementation
 
