@@ -6,6 +6,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **DeerFlow** is a multi-agent research framework built on LangGraph that orchestrates specialized AI agents to conduct comprehensive research and generate detailed reports. The system uses a graph-based workflow architecture where agents collaborate through state management and message passing.
 
+## Quick Reference
+
+### Essential Commands
+```bash
+# Development setup
+uv sync                    # Install dependencies
+cp .env.example .env       # Configure environment
+cp conf.yaml.example conf.yaml  # Configure LLM models
+
+# Development workflow  
+make serve                 # Start backend with hot reload
+uv run main.py            # Console interface
+./bootstrap.sh -d         # Full stack development mode
+
+# Quality assurance
+make test                 # Run all tests
+make lint                 # Check code formatting
+make format               # Format code
+make coverage             # Test coverage report
+
+# Debugging
+make langgraph-dev        # LangGraph Studio debugging
+```
+
 ## Common Development Commands
 
 ### Python Backend Development
@@ -177,11 +201,15 @@ Supports multiple providers through litellm:
 Modify `src/config/agents.py` to assign appropriate models:
 ```python
 AGENT_LLM_MAP: dict[str, LLMType] = {
-    "coordinator": "reasoning",    # Complex planning tasks
-    "planner": "reasoning",       # Strategic research planning  
-    "researcher": "basic",        # Information gathering
+    "coordinator": "basic",       # Entry point coordination
+    "planner": "basic",          # Strategic research planning  
+    "researcher": "basic",       # Information gathering
     "coder": "basic",            # Code execution
     "reporter": "basic",         # Report synthesis
+    "podcast_script_writer": "basic",  # Podcast generation
+    "ppt_composer": "basic",     # PowerPoint generation
+    "prose_writer": "basic",     # Text enhancement
+    "prompt_enhancer": "basic",  # Prompt improvement
 }
 ```
 
@@ -190,17 +218,25 @@ AGENT_LLM_MAP: dict[str, LLMType] = {
 ### Testing Strategy
 - Unit tests in `tests/unit/` organized by module
 - Integration tests in `tests/integration/` for end-to-end workflows
-- Use pytest with coverage reporting
+- Use pytest with coverage reporting: `make test`, `make coverage`
 - Test configuration: `pyproject.toml` with 25% minimum coverage
+- Run specific tests: `pytest tests/integration/test_nodes.py`
 
 ### Code Quality Standards
-- **Black** for code formatting with 88-character line length
-- **Ruff** for comprehensive linting
-- **Python 3.12+** required
+- **Black** for code formatting with 88-character line length: `make format`
+- **Ruff** for comprehensive linting: `make lint`
+- **Python 3.12+** required (configured in pyproject.toml)
 - Follow existing patterns in agent creation and prompt templates
+
+### Development Workflow
+- Use `uv` for dependency management (auto-creates virtual environment)
+- Bootstrap script manages both backend and frontend: `./bootstrap.sh -d`
+- Hot reload available for backend: `make serve` or `uv run server.py --reload`
+- Frontend development in `web/` directory with pnpm
 
 ### LangGraph Development
 - Use LangGraph Studio for debugging workflows: `make langgraph-dev`
+- Configuration in `langgraph.json` defines graph structure and dependencies
 - State updates via LangGraph Commands for proper node transitions
 - Human-in-the-loop feedback via plan iteration system
 - Enable LangSmith tracing for production monitoring
@@ -209,6 +245,7 @@ AGENT_LLM_MAP: dict[str, LLMType] = {
 - Configure MCP servers in settings for dynamic tool loading
 - Test MCP integration via `/api/mcp/servers` endpoints
 - Agent-specific tool assignment through configuration
+- **Security Warning**: Evaluate MCP servers and Python REPL for production use
 
 ## API Endpoints
 
@@ -234,3 +271,6 @@ AGENT_LLM_MAP: dict[str, LLMType] = {
 - **Security considerations**: Evaluate MCP servers and Python REPL for production
 - **Multi-modal support**: Handles text, images, and audio content generation
 - **Internationalization**: Supports multiple languages via locale configuration
+- **Environment Variables**: Essential settings in `.env` (SEARCH_API, API keys, etc.)
+- **Docker Support**: Both backend-only and full-stack deployment options available
+- **Comprehensive Logging**: Structured logging system across all components in `logs/` directory

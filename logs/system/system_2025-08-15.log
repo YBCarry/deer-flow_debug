@@ -1,0 +1,5 @@
+{"timestamp": "2025-08-15T21:34:02.463928", "level": "INFO", "logger": "src.server.app", "message": "Allowed origins: ['http://40.76.136.3:3000']", "module": "app", "function": "<module>", "line": 68, "taskName": "Task-1"}
+{"timestamp": "2025-08-15T21:34:36.931281", "level": "INFO", "logger": "__mp_main__", "message": "Received shutdown signal. Starting graceful shutdown...", "module": "server", "function": "handle_shutdown", "line": 25, "taskName": "Task-1"}
+{"timestamp": "2025-08-15T21:34:52.737276", "level": "INFO", "logger": "src.server.app", "message": "Allowed origins: ['http://40.76.136.3:3000']", "module": "app", "function": "<module>", "line": 68, "taskName": "Task-1"}
+{"timestamp": "2025-08-15T21:35:34.647629", "level": "INFO", "logger": "__mp_main__", "message": "Received shutdown signal. Starting graceful shutdown...", "module": "server", "function": "handle_shutdown", "line": 25, "taskName": "Task-1"}
+{"timestamp": "2025-08-15T21:38:33.942035", "level": "INFO", "logger": "src.server.app", "message": "Allowed origins: ['http://40.76.136.3:3000']", "module": "app", "function": "<module>", "line": 68, "taskName": "Task-1"}

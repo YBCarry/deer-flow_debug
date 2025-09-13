@@ -5,8 +5,11 @@ import base64
 import json
 import logging
 import os
+import shutil
 import time
 import uuid
+from datetime import datetime
+from pathlib import Path
 from typing import Annotated, List, cast
 from uuid import uuid4
 
@@ -44,6 +47,12 @@ from src.server.rag_request import (
     RAGResourceRequest,
     RAGResourcesResponse,
 )
+from src.server.prompt_request import (
+    PromptFileInfo,
+    PromptUploadRequest,
+    PromptUploadResponse,
+    PromptListResponse,
+)
 from src.tools import VolcengineTTS
 
 # Setup comprehensive logging
@@ -62,8 +71,10 @@ app = FastAPI(
 # Add CORS middleware
 # It's recommended to load the allowed origins from an environment variable
 # for better security and flexibility across different environments.
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
-allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+# allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+# allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+allowed_origins = ["*"]
 
 logger.info(f"Allowed origins: {allowed_origins}")
 
@@ -454,3 +465,144 @@ async def config():
         rag=RAGConfigResponse(provider=SELECTED_RAG_PROVIDER),
         models=get_configured_llm_models(),
     )
+
+
+@app.get("/api/prompts", response_model=PromptListResponse)
+async def get_prompt_files():
+    """Get list of available prompt files."""
+    from pathlib import Path
+    import os
+    
+    # Define allowed prompt files
+    allowed_files = ["coder.md", "coordinator.md", "planner.md", "reporter.md", "researcher.md"]
+    
+    # Use different paths for Docker and local environments
+    if os.path.exists("/app/src/prompts"):
+        prompts_dir = Path("/app/src/prompts")  # Docker environment
+    else:
+        prompts_dir = Path("src/prompts")  # Local development environment
+    
+    # Ensure directory exists
+    prompts_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Check if prompts directory is empty and copy default files if needed
+    existing_files = list(prompts_dir.glob("*.md"))
+    if not existing_files:
+        logger.warning("No prompt files found in src/prompts/, creating placeholder files")
+        
+        # Create minimal placeholder files to prevent system failure
+        placeholders = {
+            "coder.md": "# Coder Agent\nYou are a helpful coding assistant.",
+            "coordinator.md": "# Coordinator Agent\nYou coordinate research tasks.",
+            "planner.md": "# Planner Agent\nYou create research plans.",
+            "reporter.md": "# Reporter Agent\nYou write comprehensive reports.",
+            "researcher.md": "# Researcher Agent\nYou conduct research using available tools."
+        }
+        
+        for filename, content in placeholders.items():
+            file_path = prompts_dir / filename
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                logger.info(f"Created placeholder file: {filename}")
+            except Exception as e:
+                logger.error(f"Failed to create placeholder {filename}: {e}")
+    
+    files_info = []
+    
+    for filename in allowed_files:
+        file_path = prompts_dir / filename
+        if file_path.exists():
+            stat = file_path.stat()
+            # Read first 200 characters as preview
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read(200)
+                    preview = content.replace('\n', ' ').strip()
+                    if len(content) == 200:
+                        preview += "..."
+            except Exception:
+                preview = "Unable to read file preview"
+            
+            files_info.append(PromptFileInfo(
+                filename=filename,
+                size=stat.st_size,
+                last_modified=datetime.fromtimestamp(stat.st_mtime),
+                content_preview=preview
+            ))
+        else:
+            # File doesn't exist, create placeholder info
+            files_info.append(PromptFileInfo(
+                filename=filename,
+                size=0,
+                last_modified=datetime.now(),
+                content_preview="File not found"
+            ))
+    
+    return PromptListResponse(files=files_info, allowed_files=allowed_files)
+
+
+@app.post("/api/prompts/upload", response_model=PromptUploadResponse)
+async def upload_prompt_file(request: PromptUploadRequest):
+    """Upload a prompt file."""
+    import os
+    from pathlib import Path
+    
+    # Define allowed prompt files
+    allowed_files = ["coder.md", "coordinator.md", "planner.md", "reporter.md", "researcher.md"]
+    
+    # Validate filename
+    if request.filename not in allowed_files:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid filename. Allowed files are: {', '.join(allowed_files)}"
+        )
+    
+    # Validate content is not empty
+    if not request.content.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="File content cannot be empty"
+        )
+    
+    try:
+        # Use different paths for Docker and local environments
+        if os.path.exists("/app/src/prompts"):
+            prompts_dir = Path("/app/src/prompts")  # Docker environment
+            backups_dir = Path("/app/data/backups")  # Docker environment
+        else:
+            prompts_dir = Path("src/prompts")  # Local development environment
+            backups_dir = Path("data/backups")  # Local development environment
+        file_path = prompts_dir / request.filename
+        
+        # Ensure directories exist
+        prompts_dir.mkdir(parents=True, exist_ok=True)
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create backup of existing file if it exists
+        if file_path.exists():
+            backup_filename = f"{request.filename}.{int(datetime.now().timestamp())}.bak"
+            backup_path = backups_dir / backup_filename
+            
+            # Copy to backup directory instead of renaming
+            shutil.copy2(file_path, backup_path)
+            logger.info(f"Created backup: {backup_path}")
+        
+        # Write new content
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(request.content)
+        
+        logger.info(f"Successfully uploaded {request.filename}")
+        
+        return PromptUploadResponse(
+            success=True,
+            message=f"Successfully uploaded {request.filename}",
+            filename=request.filename
+        )
+    
+    except Exception as e:
+        logger.error(f"Error uploading {request.filename}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload file: {str(e)}"
+        )

@@ -40,7 +40,7 @@ class StructuredFormatter(logging.Formatter):
             }:
                 log_data[key] = value
         
-        return json.dumps(log_data, ensure_ascii=False)
+        return json.dumps(log_data, ensure_ascii=False, default=str)
 
 
 class InteractionFormatter(logging.Formatter):
