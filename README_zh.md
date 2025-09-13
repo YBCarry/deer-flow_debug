@@ -459,6 +459,33 @@ docker compose build
 docker compose up
 ```
 
+#### 使用 ngrok 进行外部访问（可选）
+
+对于外部访问 DeerFlow（特别是系统提示上传功能），您可以使用 ngrok 隧道：
+
+```bash
+# 安装 ngrok 并使用您的令牌进行身份验证
+# 为两个服务设置隧道
+ngrok http 8000 --subdomain your-backend-name &    # 后端 API
+ngrok http 3001 --subdomain your-frontend-name &   # 前端 Web UI
+```
+
+**重要配置说明：**
+
+- **系统提示上传**：当使用外部 ngrok 访问时，前端需要直接调用后端 ngrok URL 以避免 CORS 和网络问题
+- **ngrok 请求头**：在 API 调用中添加 `'ngrok-skip-browser-warning': 'true'` 请求头以绕过 ngrok 浏览器警告
+- **生产安全**：在生产部署中添加身份验证并评估 MCP Server 和 Python REPL 的安全性
+
+**前端 API 配置示例：**
+```javascript
+// 在使用 ngrok 的生产环境中，修改 API 调用以使用直接的后端 URL
+fetch('https://your-backend-subdomain.ngrok-free.app/api/prompts', {
+  headers: {
+    'ngrok-skip-browser-warning': 'true'
+  }
+})
+```
+
 > [!WARNING]
 > 如果您想将 DeerFlow 部署到生产环境中，请为网站添加身份验证，并评估 MCPServer 和 Python Repl 的安全检查。
 

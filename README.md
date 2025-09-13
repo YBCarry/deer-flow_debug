@@ -80,6 +80,7 @@ In this demo, we showcase how to use DeerFlow to:
 - [🛠️ Development](#development)
 - [🐳 Docker](#docker)
 - [🗣️ Text-to-Speech Integration](#text-to-speech-integration)
+- [📝 System Prompt Upload](SYSTEM_PROMPT_UPLOAD.md)
 - [📚 Examples](#examples)
 - [❓ FAQ](#faq)
 - [📜 License](#license)
@@ -264,6 +265,15 @@ DeerFlow support private knowledgebase such as ragflow and vikingdb, so that you
   - AI-powered podcast script generation and audio synthesis
   - Automated creation of simple PowerPoint presentations
   - Customizable templates for tailored content
+
+### System Management
+
+- 📝 **System Prompt Upload**
+  - Web UI for managing AI agent prompt templates
+  - Upload and update prompts for all 5 core agents (coordinator, planner, researcher, coder, reporter)
+  - Automatic backup system with version control
+  - Real-time validation and preview
+  - **📖 [Detailed Documentation](SYSTEM_PROMPT_UPLOAD.md)** - Complete guide for using the prompt upload feature
 
 ## Architecture
 
@@ -453,6 +463,33 @@ docker compose build
 
 # start the server
 docker compose up
+```
+
+#### External Access with ngrok (Optional)
+
+For accessing DeerFlow externally (especially for system prompt upload functionality), you can use ngrok tunnels:
+
+```bash
+# Install ngrok and authenticate with your token
+# Setup tunnels for both services
+ngrok http 8000 --subdomain your-backend-name &    # Backend API
+ngrok http 3001 --subdomain your-frontend-name &   # Frontend Web UI
+```
+
+**Important Configuration Notes:**
+
+- **System Prompt Upload**: When using external ngrok access, the frontend needs to call the backend ngrok URL directly to avoid CORS and network issues
+- **ngrok Headers**: Add `'ngrok-skip-browser-warning': 'true'` header in API calls to bypass ngrok browser warnings
+- **Production Security**: Add authentication and evaluate MCP Server and Python REPL security for production deployments
+
+**Example Frontend API Configuration:**
+```javascript
+// In production with ngrok, modify API calls to use direct backend URL
+fetch('https://your-backend-subdomain.ngrok-free.app/api/prompts', {
+  headers: {
+    'ngrok-skip-browser-warning': 'true'
+  }
+})
 ```
 
 > [!WARNING]
